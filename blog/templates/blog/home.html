@@ -1,0 +1,42 @@
+﻿{% extends 'blog/base.html' %}
+
+{% block title %}首页 | {{ site_config.site_name }}{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>{{ site_config.home_hero_title }}</h1>
+    <p>{{ site_config.home_hero_subtitle }}</p>
+</section>
+
+<div class="section-head">
+    <h2>{{ site_config.home_posts_title }}</h2>
+    <a href="{% url 'blog:posts' %}">{{ site_config.home_posts_more_text }}</a>
+</div>
+<div class="post-list">
+    {% for post in latest_posts %}
+    <article class="post-card">
+        <h3><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h3>
+        <p class="post-meta">{{ post.published_at|date:"Y-m-d" }} · {{ post.get_post_type_display }}</p>
+        <p>{{ post.summary|default:post.content|truncatechars:120 }}</p>
+    </article>
+    {% empty %}
+    <p>{{ site_config.home_posts_empty_text }}</p>
+    {% endfor %}
+</div>
+
+<div class="section-head with-top-gap">
+    <h2>{{ site_config.home_digest_title }}</h2>
+    <a href="{% url 'blog:digest' %}">{{ site_config.home_digest_more_text }}</a>
+</div>
+<div class="post-list">
+    {% for post in latest_digests %}
+    <article class="post-card">
+        <h3><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h3>
+        <p class="post-meta">{{ post.published_at|date:"Y-m-d" }} · {{ post.get_post_type_display }}</p>
+        <p>{{ post.summary|default:post.content|truncatechars:120 }}</p>
+    </article>
+    {% empty %}
+    <p>{{ site_config.home_digest_empty_text }}</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+﻿{% extends 'blog/base.html' %}
+
+{% block title %}{{ site_config.search_title }} | {{ site_config.site_name }}{% endblock %}
+
+{% block content %}
+<section class="hero slim">
+    <h1>{{ site_config.search_title }}</h1>
+    <p>{{ site_config.search_hint }}</p>
+</section>
+
+<form class="search-form" method="get">
+    <input type="text" name="q" value="{{ query }}" placeholder="{{ site_config.search_placeholder }}">
+    <button type="submit">{{ site_config.search_button_text }}</button>
+</form>
+
+{% if query %}
+<div class="post-list with-top-gap">
+    {% for post in results %}
+    <article class="post-card">
+        <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+        <p class="post-meta">{{ post.published_at|date:"Y-m-d" }} · {{ post.get_post_type_display }}</p>
+        <p>{{ post.summary|default:post.content|truncatechars:160 }}</p>
+    </article>
+    {% empty %}
+    <p>{{ site_config.search_empty_text }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% include 'blog/pagination.html' with page_obj=page_obj %}
+{% endblock %}

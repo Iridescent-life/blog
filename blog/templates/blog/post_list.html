@@ -1,0 +1,40 @@
+﻿{% extends 'blog/base.html' %}
+
+{% block title %}{% if section_kind == "digest" %}{{ site_config.digest_title }}{% else %}{{ site_config.posts_title }}{% endif %} | {{ site_config.site_name }}{% endblock %}
+
+{% block content %}
+<section class="hero slim">
+    {% if section_kind == "digest" %}
+    <h1>{{ site_config.digest_title }}</h1>
+    <p>{{ site_config.digest_hint }}</p>
+    {% else %}
+    <h1>{{ site_config.posts_title }}</h1>
+    <p>{{ site_config.posts_hint }}</p>
+    {% endif %}
+</section>
+
+<div class="post-list">
+    {% for post in posts %}
+    <article class="post-card">
+        <h2><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></h2>
+        <p class="post-meta">{{ post.published_at|date:"Y-m-d" }} · {{ post.get_post_type_display }}</p>
+        <p>{{ post.summary|default:post.content|truncatechars:160 }}</p>
+        {% if post.tags.all %}
+        <p class="post-tags">
+            {% for tag in post.tags.all %}
+            <a href="{% url 'blog:tag_detail' slug=tag.slug %}">#{{ tag.name }}</a>
+            {% endfor %}
+        </p>
+        {% endif %}
+    </article>
+    {% empty %}
+    {% if section_kind == "digest" %}
+    <p>{{ site_config.digest_empty_text }}</p>
+    {% else %}
+    <p>{{ site_config.posts_empty_text }}</p>
+    {% endif %}
+    {% endfor %}
+</div>
+
+{% include 'blog/pagination.html' with page_obj=page_obj %}
+{% endblock %}

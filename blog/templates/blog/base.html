@@ -1,0 +1,51 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_config.site_name }}{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{{ site_config.meta_description_default }}{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}{{ site_config.meta_keywords_default }}{% endblock %}">
+    <link rel="stylesheet" href="{% static 'blog/styles.css' %}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="container nav-wrap">
+            <a class="brand" href="{% url 'blog:home' %}">{{ site_config.brand_text }}</a>
+            <nav class="main-nav">
+                {% for item in nav_items %}
+                <a href="{{ item.url }}"{% if item.open_in_new_tab %} target="_blank" rel="noopener"{% endif %}>{{ item.label }}</a>
+                {% endfor %}
+            </nav>
+            <a class="admin-link" href="/admin/">{{ site_config.admin_link_text }}</a>
+        </div>
+    </header>
+
+    <main class="container page-grid">
+        <aside class="sidebar">
+            <section class="profile-card">
+                <h2>{{ site_config.profile_name }}</h2>
+                <p>{{ site_config.profile_role }}</p>
+                <p class="profile-desc">{{ site_config.profile_description }}</p>
+                <div class="social-list">
+                    {% for social in social_links %}
+                    <a href="{{ social.url }}"{% if social.open_in_new_tab %} target="_blank" rel="noopener"{% endif %}>{{ social.label }}</a>
+                    {% endfor %}
+                </div>
+            </section>
+        </aside>
+
+        <section class="content">
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <p>{{ footer_left_text }}</p>
+            <p>{{ site_config.footer_right_text }}</p>
+        </div>
+    </footer>
+</body>
+</html>

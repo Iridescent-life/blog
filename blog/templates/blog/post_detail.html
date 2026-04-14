@@ -1,0 +1,79 @@
+﻿{% extends 'blog/base.html' %}
+
+{% block title %}{{ post.meta_title }} | {{ site_config.site_name }}{% endblock %}
+{% block meta_description %}{{ post.meta_description }}{% endblock %}
+{% block meta_keywords %}{% if post.meta_keywords %}{{ post.meta_keywords }}{% else %}ai,blog,django{% endif %}{% endblock %}
+
+{% block content %}
+<article class="post-detail">
+    <h1>{{ post.title }}</h1>
+    <p class="post-meta">{{ post.published_at|date:"Y-m-d H:i" }} · {{ post.get_post_type_display }}</p>
+
+    {% if post.cover_image %}
+    <img class="post-cover" src="{{ post.cover_image.url }}" alt="{{ post.title }} 封面图">
+    {% endif %}
+
+    {% if post.tags.all %}
+    <p class="post-tags">
+        {% for tag in post.tags.all %}
+        <a href="{% url 'blog:tag_detail' slug=tag.slug %}">#{{ tag.name }}</a>
+        {% endfor %}
+    </p>
+    {% endif %}
+
+    <div class="post-content">{{ post.content|safe }}</div>
+</article>
+
+<section id="comments" class="comments-panel">
+    <div class="comments-head">
+        <h2>{{ site_config.comments_title }}</h2>
+        <span>{{ comments|length }} 条</span>
+    </div>
+
+    <div class="comment-list">
+        {% for comment in comments %}
+        <article class="comment-item">
+            <div class="comment-meta">
+                <strong>{{ comment.name }}</strong>
+                <time>{{ comment.created_at|date:"Y-m-d H:i" }}</time>
+            </div>
+            <p>{{ comment.content|linebreaksbr }}</p>
+        </article>
+        {% empty %}
+        <p class="comment-empty">{{ site_config.comments_empty_text }}</p>
+        {% endfor %}
+    </div>
+
+    {% if post.allow_comments %}
+    <form class="comment-form" method="post" action="{% url 'blog:add_comment' slug=post.slug %}">
+        {% csrf_token %}
+        {{ comment_form.non_field_errors }}
+        <div class="comment-grid">
+            <label>
+                <span>昵称</span>
+                {{ comment_form.name }}
+                {{ comment_form.name.errors }}
+            </label>
+            <label>
+                <span>Email</span>
+                {{ comment_form.email }}
+                {{ comment_form.email.errors }}
+            </label>
+            <label>
+                <span>网站（可选）</span>
+                {{ comment_form.website }}
+                {{ comment_form.website.errors }}
+            </label>
+        </div>
+        <label>
+            <span>评论内容</span>
+            {{ comment_form.content }}
+            {{ comment_form.content.errors }}
+        </label>
+        <button type="submit">{{ site_config.comments_submit_text }}</button>
+    </form>
+    {% else %}
+    <p class="comment-empty">{{ site_config.comments_closed_text }}</p>
+    {% endif %}
+</section>
+{% endblock %}
