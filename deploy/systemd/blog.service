@@ -1,0 +1,23 @@
+﻿[Unit]
+Description=Gunicorn service for AI Blog
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=www-data
+WorkingDirectory=/srv/blog
+EnvironmentFile=/srv/blog/.env
+Environment="PATH=/srv/blog/.venv/bin"
+ExecStart=/srv/blog/.venv/bin/gunicorn config.wsgi:application \
+  --bind 127.0.0.1:8001 \
+  --workers 3 \
+  --threads 2 \
+  --timeout 60 \
+  --access-logfile - \
+  --error-logfile -
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

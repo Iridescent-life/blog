@@ -1,35 +1,27 @@
-﻿# DeepAI Blog System
+﻿# AI Blog System
 
-一个类似 `blog.deepai.wiki` 的个人博客系统，包含前台内容站和后台管理。
+一个可用于生产环境的 Django 博客系统，含后台管理、内容模块配置、评论审核、SEO 与封面图。
 
-## 已实现功能
+## 生产配置项
 
-- 首页：个人简介 + 最新文章 + 最新日报
-- 文章列表：`/posts/`（分页）
-- 日报列表：`/digest/`（分页）
-- 详情页：`/posts/<slug>/`、`/digest/<slug>/`
-  - 支持封面图展示
-  - 支持 SEO 标题/描述/关键词输出
-- 标签页：`/tags/`、`/tags/<slug>/`
-- 归档页：`/archives/`（按年月聚合）
-- 搜索页：`/search/?q=关键词`
-- 关于页：`/about/`
-- RSS：`/rss.xml`
-- 管理后台：`/admin/`
-  - 文章富文本编辑器（TinyMCE）
-  - 封面图上传与预览
-  - 评论审核（待审/通过/垃圾）
-  - 站点配置（`Site Setting`：全站功能块文案）
-  - 导航配置（`Navigation Items`）
-  - 社交链接配置（`Social Links`）
+项目通过环境变量控制生产配置，示例见 `.env.example`。
 
-## 技术栈
+必须配置：
 
-- Django 5
-- SQLite
-- Django Admin（内容管理后台）
+- `DJANGO_SECRET_KEY`
+- `DJANGO_DEBUG=False`
+- `DJANGO_ALLOWED_HOSTS`
+- `DJANGO_CSRF_TRUSTED_ORIGINS`
+- 数据库配置（推荐 PostgreSQL）：`DB_ENGINE=postgres`、`DB_NAME`、`DB_USER`、`DB_PASSWORD`、`DB_HOST`、`DB_PORT`
 
-## 快速启动
+建议配置：
+
+- `DJANGO_SECURE_SSL_REDIRECT=True`
+- `DJANGO_SESSION_COOKIE_SECURE=True`
+- `DJANGO_CSRF_COOKIE_SECURE=True`
+- `DJANGO_SECURE_HSTS_SECONDS=31536000`
+
+## 本地开发
 
 ```bash
 pip install -r requirements.txt
@@ -39,13 +31,107 @@ python manage.py seed_demo_data
 python manage.py runserver
 ```
 
-启动后访问：
+## 生产部署流程（Ubuntu 22.04）
 
-- 前台首页：http://127.0.0.1:8000/
-- 管理后台：http://127.0.0.1:8000/admin/
+### 1. 安装基础环境
 
-## 测试
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv python3-dev build-essential nginx postgresql postgresql-contrib
+```
+
+### 2. 创建目录并拉取代码
+
+```bash
+sudo mkdir -p /srv/blog
+sudo chown -R $USER:$USER /srv/blog
+cd /srv/blog
+git clone https://github.com/Iridescent-life/blog.git .
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -U pip
+pip install -r requirements.txt
+```
+
+### 3. 配置环境变量
+
+```bash
+cp .env.example .env
+# 编辑 .env 填入真实值
+nano .env
+```
+
+### 4. 配置 PostgreSQL
+
+```bash
+sudo -u postgres psql
+```
+
+```sql
+CREATE DATABASE blogdb;
+CREATE USER bloguser WITH PASSWORD 'replace-with-strong-password';
+GRANT ALL PRIVILEGES ON DATABASE blogdb TO bloguser;
+\q
+```
+
+### 5. 初始化 Django
+
+```bash
+cd /srv/blog
+source .venv/bin/activate
+python manage.py migrate
+python manage.py collectstatic --noinput
+python manage.py createsuperuser
+python manage.py seed_demo_data
+python manage.py check --deploy
+```
+
+### 6. 配置 Gunicorn(systemd)
+
+```bash
+sudo cp deploy/systemd/blog.service /etc/systemd/system/blog.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now blog
+sudo systemctl status blog
+```
+
+### 7. 配置 Nginx
+
+```bash
+sudo cp deploy/nginx/blog.conf /etc/nginx/sites-available/blog
+sudo ln -sf /etc/nginx/sites-available/blog /etc/nginx/sites-enabled/blog
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### 8. 配置 HTTPS（Certbot）
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d blog.example.com
+```
+
+## 发布更新操作流程
+
+每次发布执行：
+
+```bash
+cd /srv/blog
+bash deploy/scripts/deploy.sh
+```
+
+脚本会自动：
+
+1. 拉取 `origin/main`
+2. 安装依赖
+3. 执行迁移
+4. 收集静态文件
+5. 运行 `check --deploy`
+6. 重启 Gunicorn 并 reload Nginx
+
+## 运行验证
 
 ```bash
 python manage.py test
+python manage.py check
 ```
